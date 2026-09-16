@@ -33,12 +33,5 @@ python -m pip install -r requirements.txt
 streamlit run app.py
 ```
 
-## Demo scenarios
 
-- Normal
-- Overheating / Thermal Degradation
-- Lubrication Degradation
-- Injector / Fuel Abnormality
-- Mechanical / Vibration
-- Sensor Drift
 
