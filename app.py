@@ -24,6 +24,7 @@ SCENARIOS = [
     'Lubrication Degradation',
     'Injector / Fuel Abnormality',
     'Mechanical / Vibration',
+    'Electrical Degradation',
     'Sensor Drift',
 ]
 
@@ -187,7 +188,10 @@ c[2].metric('CHT', f'{r.cht:.1f} °C')
 c[3].metric('EGT', f'{r.egt:.0f} °C')
 c[4].metric('Twin Fit', f'{r.twin_fit*100:.0f}%')
 
-t1, t2, t3, t4 = st.tabs(['📡 Telemetry', '🧠 AI Diagnostics', '⏳ Health & RUL', '🛰 Replay / What-if'])
+t1, t2, t3, t4, t5 = st.tabs([
+    '📡 Telemetry', '🧠 AI Diagnostics', '⏳ Health & RUL',
+    '🛰 Replay / What-if', '⚙️ Extended Systems'
+])
 
 with t1:
     f = go.Figure()
@@ -457,6 +461,97 @@ with t4:
         f.add_trace(go.Scatter(x=w.t, y=w.overall_health*100, name='What-if health'))
         f.update_layout(title='What-if Projected Health', yaxis_title='Health (%)')
         st.plotly_chart(f, width='stretch')
+
+with t5:
+    EXTENDED_PARAMS = [
+        'engine_load', 'torque', 'power_output', 'engine_efficiency',
+        'manifold_pressure', 'intake_air_temp', 'air_mass_flow', 'fuel_pressure',
+        'air_fuel_ratio', 'ignition_timing', 'vibration_frequency',
+        'battery_current', 'alternator_voltage', 'alternator_current',
+        'electrical_power', 'alternator_power', 'fuel_consumed', 'fuel_level',
+        'degradation_stage',
+    ]
+    has_extended = all(p in d.columns for p in EXTENDED_PARAMS)
+
+    if not has_extended:
+        st.info(
+            'These extended engine parameters (torque, power output, air-fuel '
+            'ratio, electrical chain, fuel state, etc.) are produced by the '
+            'built-in simulator. Uploaded CSVs only carry the original 15-column '
+            'schema, so this tab only populates for a simulated mission.'
+        )
+    else:
+        stage_icon = {
+            'HEALTHY': '🟢', 'FAULT START': '🟡', 'MILD': '🟠',
+            'MODERATE': '🟠', 'SEVERE': '🔴',
+        }.get(r.degradation_stage, '⚪')
+        st.caption(
+            f'{stage_icon} Degradation stage: **{r.degradation_stage}**  '
+            f'(fault progress: {r.fault_ramp*100:.0f}%)'
+        )
+
+        st.write('#### Engine Performance')
+        a, b, c2, e = st.columns(4)
+        a.metric('Engine Load', f'{r.engine_load*100:.0f}%')
+        b.metric('Torque', f'{r.torque:.0f} N·m')
+        c2.metric('Power Output', f'{r.power_output:.1f} kW')
+        e.metric('Engine Efficiency', f'{r.engine_efficiency*100:.0f}%')
+
+        f = go.Figure()
+        f.add_trace(go.Scatter(x=d.t, y=d.power_output, name='Power Output (kW)'))
+        f.add_trace(go.Scatter(x=d.t, y=d.torque / 10, name='Torque (N·m ÷10)'))
+        f.update_layout(title='Performance Trend', xaxis_title='Mission Time', yaxis_title='kW / scaled N·m')
+        st.plotly_chart(f, width='stretch')
+
+        st.write('#### Air & Fuel System')
+        a, b, c2, e = st.columns(4)
+        a.metric('Manifold Pressure', f'{r.manifold_pressure:.0f} kPa')
+        b.metric('Intake Air Temp', f'{r.intake_air_temp:.1f} °C')
+        c2.metric('Air Mass Flow', f'{r.air_mass_flow:.1f} g/s')
+        e.metric('Fuel Pressure', f'{r.fuel_pressure:.0f} kPa')
+
+        f = go.Figure()
+        f.add_trace(go.Scatter(x=d.t, y=d.air_fuel_ratio, name='Air-Fuel Ratio'))
+        f.add_hline(y=14.7, line_dash='dash', annotation_text='~Stoichiometric (14.7)')
+        f.update_layout(title='Air-Fuel Ratio', xaxis_title='Mission Time', yaxis_title='AFR')
+        st.plotly_chart(f, width='stretch')
+
+        st.write('#### Mechanical')
+        a, b = st.columns(2)
+        a.metric('Vibration Frequency', f'{r.vibration_frequency:.0f} Hz')
+        b.metric('Ignition Timing', f'{r.ignition_timing:.1f}° BTDC')
+
+        f = go.Figure()
+        f.add_trace(go.Scatter(x=d.t, y=d.vibration_frequency, name='Vibration Frequency (Hz)'))
+        f.update_layout(title='Vibration Frequency', xaxis_title='Mission Time', yaxis_title='Hz')
+        st.plotly_chart(f, width='stretch')
+
+        st.write('#### Electrical System')
+        a, b, c2, e, g = st.columns(5)
+        a.metric('Battery Current', f'{r.battery_current:.1f} A')
+        b.metric('Alternator Voltage', f'{r.alternator_voltage:.1f} V')
+        c2.metric('Alternator Current', f'{r.alternator_current:.1f} A')
+        e.metric('Electrical Power', f'{r.electrical_power:.0f} W')
+        g.metric('Alternator Power', f'{r.alternator_power:.0f} W')
+
+        f = go.Figure()
+        f.add_trace(go.Scatter(x=d.t, y=d.battery_voltage, name='Battery Voltage (V)'))
+        f.add_trace(go.Scatter(x=d.t, y=d.alternator_voltage, name='Alternator Voltage (V)'))
+        f.update_layout(title='Electrical Bus Voltage', xaxis_title='Mission Time', yaxis_title='Volts')
+        st.plotly_chart(f, width='stretch')
+
+        st.write('#### Fuel & Mission State')
+        a, b = st.columns(2)
+        a.metric('Fuel Consumed', f'{r.fuel_consumed:.1f} L')
+        b.metric('Fuel Remaining', f'{r.fuel_level:.1f} L')
+
+        f = go.Figure()
+        f.add_trace(go.Scatter(x=d.t, y=d.fuel_level, name='Fuel Remaining (L)'))
+        f.update_layout(title='Fuel Depletion', xaxis_title='Mission Time', yaxis_title='Litres')
+        st.plotly_chart(f, width='stretch')
+
+        with st.expander('Show full telemetry table (every parameter)'):
+            st.dataframe(d, hide_index=True, width='stretch')
 
 st.divider()
 st.caption('Prototype uses synthetic telemetry when simulation mode is selected. Uploaded CSVs are processed locally in the running application. RUL is model-estimated against a defined synthetic EOL criterion; not certified real-engine life prediction.')
