@@ -35,3 +35,17 @@ streamlit run app.py
 
 
 
+
+## PDF engineering report
+
+After telemetry is analysed, use **📄 Download PDF Engineering Report** on the dashboard. The report contains:
+
+- executive health summary and status
+- subsystem health visualisation
+- Digital Twin observed-vs-expected plots
+- AI anomaly evidence and diagnostic contributors
+- prototype RUL and detection timing
+- maintenance advisory
+- sampled telemetry table and methodology/limitations
+
+The charts are rendered into the PDF as static high-resolution graphics, so the generated report is self-contained.
