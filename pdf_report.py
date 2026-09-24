@@ -186,7 +186,7 @@ def build_pdf_report(d: pd.DataFrame, source_name: str = "Unknown", scenario: st
         ("RPM", _fmt(r.rpm, 0)),
         ("CHT", _fmt(r.cht, 1, " °C")),
         ("EGT", _fmt(r.egt, 0, " °C")),
-        ("Twin Fit", f"{float(getattr(r, "twin_fit", 0))*100:.0f}%"),
+        ("Twin Fit", f"{float(getattr(r, 'twin_fit', 0))*100:.0f}%"),
     ]
     row = [[Paragraph(v, metric) for _, v in metrics], [Paragraph(k, label) for k, _ in metrics]]
     kt = Table(row, colWidths=[34*mm]*5)
