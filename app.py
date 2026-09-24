@@ -2,6 +2,7 @@ import io
 import streamlit as st
 import plotly.graph_objects as go
 import pandas as pd
+from pdf_report import build_pdf_report
 
 from simulator import simulate, expected
 from analytics import (
@@ -180,6 +181,25 @@ icon = {'HEALTHY': '🟢', 'DEGRADING': '🟡', 'WARNING': '🟠', 'CRITICAL': '
 
 st.subheader(f'{icon} Engine: {r.status}  |  Mission phase: {r.mission_phase}')
 st.caption(f'Data source: {st.session_state.get("source_name", "Unknown")}')
+
+# One-click engineering PDF report using the exact analysed dataset shown in the dashboard.
+pdf_report_bytes = build_pdf_report(
+    d,
+    source_name=st.session_state.get('source_name', 'Unknown'),
+    diagnosis=(fault, severity, conf, contributors),
+    rul_result=rr,
+    rul_confidence=rc,
+    threshold_result=(threshold_idx, ai_idx, threshold_time, ai_time, threshold_parameter),
+)
+
+st.download_button(
+    '📄 Download PDF Engineering Report',
+    data=pdf_report_bytes,
+    file_name='aerotwin_engine_health_report.pdf',
+    mime='application/pdf',
+    width='stretch',
+    help='Generate a formatted engineering report with health summary, Digital Twin plots, AI anomaly evidence, RUL, maintenance advisory and telemetry snapshot.'
+)
 
 c = st.columns(5)
 c[0].metric('Overall Health', f'{r.overall_health*100:.0f}%')
