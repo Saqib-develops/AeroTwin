@@ -1,4 +1,5 @@
 import io
+import time
 import streamlit as st
 import plotly.graph_objects as go
 import pandas as pd
@@ -417,6 +418,103 @@ def make_sample_csv():
 
 
 # =====================================================================
+# MISSION REPLAY HELPERS
+#
+# These only READ columns process() already computes (status, fault,
+# severity, fault_confidence, anomaly, anomaly_score) — nothing here
+# touches analytics.py. They're used in Tab 4 to turn the replayed
+# slice of the mission into a readable event timeline instead of a
+# raw row dump.
+# =====================================================================
+
+def _debounce_categorical(series, window=5):
+    """
+    Majority vote over a trailing window. A single noisy sample near a
+    decision boundary can flip the raw per-row fault/status label back
+    and forth; this smooths that out so the timeline reports real
+    sustained transitions, not single-sample flicker.
+    """
+    out = []
+    for i in range(len(series)):
+        lo = max(0, i - window + 1)
+        w = series.iloc[lo:i + 1]
+        counts = w.value_counts()
+        top = counts.max()
+        candidates = counts[counts == top].index.tolist()
+        out.append(candidates[0] if len(candidates) == 1 else w.iloc[-1])
+    return pd.Series(out, index=series.index)
+
+
+def build_event_timeline(mission_slice):
+    """
+    Derive discrete events (status transitions, fault-diagnosis
+    changes, AI anomaly confirmation) from the current replay slice.
+    Anomaly confirmation reuses the same "3 consecutive samples" rule
+    threshold_vs_ai() already applies, so it means the same thing here
+    as on the AI Diagnostics tab.
+    """
+    events = []
+
+    if "status" not in mission_slice.columns or "fault" not in mission_slice.columns:
+        return events
+
+    debounced_status = _debounce_categorical(mission_slice["status"])
+    debounced_fault = _debounce_categorical(mission_slice["fault"])
+
+    if "anomaly" in mission_slice.columns:
+        anomaly_confirmed = mission_slice["anomaly"].rolling(3, min_periods=3).sum() >= 3
+    else:
+        anomaly_confirmed = pd.Series(False, index=mission_slice.index)
+
+    prev_status = None
+    prev_fault = None
+    prev_anomaly_confirmed = False
+
+    for i, (_, row) in enumerate(mission_slice.iterrows()):
+        d_status = debounced_status.iloc[i]
+        d_fault = debounced_fault.iloc[i]
+        raw_confirmed = anomaly_confirmed.iloc[i]
+        a_confirmed = bool(raw_confirmed) if pd.notna(raw_confirmed) else False
+
+        if prev_status is not None and d_status != prev_status:
+            events.append({
+                "t": row["t"],
+                "type": "status",
+                "text": f"Status changed: {prev_status} \u2192 {d_status}",
+            })
+
+        normal_labels = ("NORMAL / NO CONFIRMED FAULT", "HEALTHY")
+        if (
+            prev_fault is not None
+            and d_fault != prev_fault
+            and d_fault not in normal_labels
+        ):
+            sev = row["severity"] if "severity" in row.index else "?"
+            conf_val = row["fault_confidence"] if "fault_confidence" in row.index else None
+            conf_txt = f", {conf_val*100:.0f}% confidence" if conf_val is not None else ""
+            events.append({
+                "t": row["t"],
+                "type": "fault",
+                "text": f"Diagnosis: {d_fault} ({sev}{conf_txt})",
+            })
+
+        if a_confirmed and not prev_anomaly_confirmed:
+            score_val = row["anomaly_score"] if "anomaly_score" in row.index else None
+            score_txt = f" (score {score_val:.2f})" if score_val is not None else ""
+            events.append({
+                "t": row["t"],
+                "type": "anomaly",
+                "text": f"AI anomaly confirmed{score_txt}",
+            })
+
+        prev_status = d_status
+        prev_fault = d_fault
+        prev_anomaly_confirmed = a_confirmed
+
+    return events
+
+
+# =====================================================================
 # CSV UPLOAD
 # =====================================================================
 
@@ -443,6 +541,9 @@ if source == "Upload CSV":
             )
 
             st.session_state.source_name = uploaded.name
+            st.session_state.replay_idx = 0
+            st.session_state.replay_playing = False
+            st.session_state.pop("pdf_report_bytes", None)
 
             st.success(
                 f"Loaded and analysed {uploaded.name} — "
@@ -481,6 +582,9 @@ else:
             st.session_state.source_name = (
                 f"Simulated: {scenario}"
             )
+            st.session_state.replay_idx = 0
+            st.session_state.replay_playing = False
+            st.session_state.pop("pdf_report_bytes", None)
 
             st.success(
                 "Mission simulated and analysed using the updated "
@@ -530,11 +634,56 @@ if "df" not in st.session_state:
 
 
 # =====================================================================
-# CURRENT DATA
+# MISSION REPLAY CONTROLS
+#
+# st.session_state.df always holds the FULL processed mission. `d`
+# below is a growing slice of it, controlled by replay_idx. Every tab
+# further down reads from `d`, so slicing it here is enough to make
+# the entire dashboard (charts, health, diagnosis, RUL, threshold
+# comparison, extended systems) replay-aware with no further changes
+# needed to those tabs — health()/detect()/rul()/threshold_vs_ai()
+# and add_derived_features() are assumed to only look backward in
+# time (as in the previous version of this file), so a slice up to
+# the current tick matches what those functions would produce live.
 # =====================================================================
 
-d = st.session_state.df
+n_total = len(st.session_state.df)
 
+if "replay_idx" not in st.session_state:
+    st.session_state.replay_idx = n_total - 1
+if "replay_playing" not in st.session_state:
+    st.session_state.replay_playing = False
+
+st.session_state.replay_idx = min(st.session_state.replay_idx, n_total - 1)
+
+with st.sidebar:
+    st.divider()
+    st.header("🛰 Mission Replay")
+
+    replay_speed = st.slider(
+        "Replay speed (ticks / second)",
+        1, 20, 5,
+        key="replay_speed"
+    )
+
+    rc1, rc2, rc3 = st.columns(3)
+    if rc1.button("▶️ Play", width="stretch"):
+        st.session_state.replay_playing = True
+    if rc2.button("⏸️ Pause", width="stretch"):
+        st.session_state.replay_playing = False
+    if rc3.button("⏮️ Restart", width="stretch"):
+        st.session_state.replay_playing = False
+        st.session_state.replay_idx = 0
+
+    st.session_state.replay_idx = st.slider(
+        "Scrub mission time",
+        0, n_total - 1,
+        st.session_state.replay_idx,
+        key="replay_scrub_slider"
+    )
+    st.caption(f"Showing mission tick {st.session_state.replay_idx + 1} of {n_total}.")
+
+d = st.session_state.df.iloc[: st.session_state.replay_idx + 1]
 r = d.iloc[-1]
 
 
@@ -667,44 +816,60 @@ st.caption(
 
 
 # =====================================================================
-# PDF REPORT
+# PDF REPORT (generated on demand, not on every rerun)
+#
+# Mission replay's auto-advance triggers a script rerun on every tick.
+# Building the PDF eagerly on every rerun would rebuild it dozens of
+# times per second while playing — this makes it a button so it only
+# builds once, reflecting whatever mission state is on screen when
+# clicked.
 # =====================================================================
 
-pdf_report_bytes = build_pdf_report(
-    d,
-    source_name=st.session_state.get(
-        "source_name",
-        "Unknown"
-    ),
-    diagnosis=(
-        fault,
-        severity,
-        conf,
-        contributors
-    ),
-    rul_result=rr,
-    rul_confidence=rc,
-    threshold_result=(
-        threshold_idx,
-        ai_idx,
-        threshold_time,
-        ai_time,
-        threshold_parameter
-    ),
-)
+pdf_col1, pdf_col2 = st.columns([1, 2])
 
-st.download_button(
-    "📄 Download PDF Engineering Report",
-    data=pdf_report_bytes,
-    file_name="aerotwin_engine_health_report.pdf",
-    mime="application/pdf",
-    width="stretch",
-    help=(
-        "Generate a formatted engineering report with health "
-        "summary, Digital Twin plots, AI anomaly evidence, "
-        "RUL, maintenance advisory and telemetry snapshot."
-    )
-)
+with pdf_col1:
+    if st.button(
+        "📄 Generate PDF Report",
+        width="stretch",
+        help=(
+            "Builds a formatted engineering report for the mission "
+            "state currently shown (respects the replay position)."
+        )
+    ):
+        st.session_state.pdf_report_bytes = build_pdf_report(
+            d,
+            source_name=st.session_state.get(
+                "source_name",
+                "Unknown"
+            ),
+            diagnosis=(
+                fault,
+                severity,
+                conf,
+                contributors
+            ),
+            rul_result=rr,
+            rul_confidence=rc,
+            threshold_result=(
+                threshold_idx,
+                ai_idx,
+                threshold_time,
+                ai_time,
+                threshold_parameter
+            ),
+        )
+
+with pdf_col2:
+    if "pdf_report_bytes" in st.session_state:
+        st.download_button(
+            "⬇ Download PDF Engineering Report",
+            data=st.session_state.pdf_report_bytes,
+            file_name="aerotwin_engine_health_report.pdf",
+            mime="application/pdf",
+            width="stretch",
+        )
+    else:
+        st.caption("Click Generate to build the report for the mission state currently shown.")
 
 
 # =====================================================================
@@ -1574,6 +1739,22 @@ with t3:
 
 with t4:
 
+    st.write(f"### 🛰 Mission Replay — tick {st.session_state.replay_idx + 1} of {n_total}")
+    st.progress((st.session_state.replay_idx + 1) / n_total)
+
+    st.write("#### 🕒 Fault / Event Timeline")
+
+    timeline_events = build_event_timeline(d)
+
+    if not timeline_events:
+        st.caption("No status or fault transitions yet in the replayed portion of the mission.")
+    else:
+        icon_map = {"status": "🔄", "fault": "🔧", "anomaly": "⚠️"}
+        for ev in reversed(timeline_events[-25:]):
+            st.markdown(f"{icon_map.get(ev['type'], '⚪')} `t={ev['t']:.0f}` — {ev['text']}")
+
+    st.divider()
+
     st.write(
         "### Mission telemetry / replay"
     )
@@ -1602,6 +1783,10 @@ with t4:
         hide_index=True,
         width="stretch"
     )
+
+    st.divider()
+
+    st.write("### What-if Simulation")
 
     if wi:
 
@@ -2239,3 +2424,21 @@ st.caption(
     "Robust Mahalanobis → persistent anomaly detection → subsystem "
     "health → hybrid diagnosis → RUL."
 )
+
+
+# =====================================================================
+# REPLAY AUTO-ADVANCE
+#
+# Runs after everything above has rendered the current tick. If
+# playing and not yet at the end of the mission, wait, advance one
+# tick, and rerun the whole script — which re-slices `d` further up
+# and redraws every tab above with the new state.
+# =====================================================================
+
+if st.session_state.get("replay_playing", False):
+    if st.session_state.replay_idx < n_total - 1:
+        time.sleep(1.0 / st.session_state.replay_speed)
+        st.session_state.replay_idx += 1
+        st.rerun()
+    else:
+        st.session_state.replay_playing = False
