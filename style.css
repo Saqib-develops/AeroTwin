@@ -1,0 +1,711 @@
+/* ============================================================
+   AEROTWIN — SIH26054
+   Aerospace Engine Digital Twin Dashboard
+   ============================================================ */
+
+/* ============================================================
+   GLOBAL APPLICATION
+   ============================================================ */
+
+.stApp {
+    background:
+        radial-gradient(
+            circle at 15% 10%,
+            rgba(30, 91, 135, 0.16),
+            transparent 32%
+        ),
+        radial-gradient(
+            circle at 85% 20%,
+            rgba(21, 111, 140, 0.10),
+            transparent 30%
+        ),
+        linear-gradient(
+            180deg,
+            #06101c 0%,
+            #091522 45%,
+            #0b1725 100%
+        );
+
+    color: #e8f0f7;
+}
+
+
+/* ============================================================
+   MAIN CONTENT
+   ============================================================ */
+
+.main .block-container {
+    padding-top: 1.5rem;
+    padding-bottom: 2rem;
+    max-width: 1500px;
+}
+
+
+/* ============================================================
+   HEADINGS
+   ============================================================ */
+
+h1 {
+    color: #ffffff !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.5px;
+}
+
+h2 {
+    color: #f4f8fc !important;
+    font-weight: 750 !important;
+}
+
+h3 {
+    color: #e8f1f8 !important;
+    font-weight: 700 !important;
+}
+
+h4 {
+    color: #dbe8f2 !important;
+}
+
+
+/* ============================================================
+   NORMAL TEXT
+   ============================================================ */
+
+p,
+label,
+span,
+div {
+    color: inherit;
+}
+
+
+/* ============================================================
+   AEROTWIN TITLE
+   ============================================================ */
+
+.aerotwin-title {
+    font-size: 2.8rem;
+    font-weight: 850;
+    line-height: 1.1;
+
+    color: #ffffff;
+
+    margin-bottom: 5px;
+
+    letter-spacing: -1px;
+}
+
+.aerotwin-subtitle {
+    font-size: 1rem;
+
+    color: #8fa8bd;
+
+    margin-bottom: 25px;
+}
+
+
+/* ============================================================
+   ENGINE STATUS HEADER
+   ============================================================ */
+
+.engine-header {
+    background:
+        linear-gradient(
+            135deg,
+            rgba(19, 43, 66, 0.95),
+            rgba(8, 24, 39, 0.95)
+        );
+
+    border: 1px solid #24445f;
+
+    border-radius: 18px;
+
+    padding: 22px 25px;
+
+    margin: 15px 0 20px 0;
+
+    box-shadow:
+        0 12px 35px rgba(0, 0, 0, 0.30);
+}
+
+.engine-title {
+    color: #ffffff;
+
+    font-size: 1.35rem;
+
+    font-weight: 750;
+}
+
+.engine-subtitle {
+    color: #8fa8bd;
+
+    font-size: 0.9rem;
+
+    margin-top: 5px;
+}
+
+
+/* ============================================================
+   KPI CARDS
+   ============================================================ */
+
+.kpi-card {
+    background:
+        linear-gradient(
+            145deg,
+            rgba(19, 38, 58, 0.98),
+            rgba(9, 22, 36, 0.98)
+        );
+
+    border: 1px solid #223e57;
+
+    border-radius: 16px;
+
+    padding: 18px;
+
+    min-height: 110px;
+
+    box-shadow:
+        0 8px 25px rgba(0, 0, 0, 0.24);
+}
+
+.kpi-label {
+    color: #7f9bb2;
+
+    font-size: 0.72rem;
+
+    font-weight: 650;
+
+    text-transform: uppercase;
+
+    letter-spacing: 1.2px;
+}
+
+.kpi-value {
+    color: #ffffff;
+
+    font-size: 1.8rem;
+
+    font-weight: 800;
+
+    margin-top: 7px;
+}
+
+.kpi-description {
+    color: #6f899f;
+
+    font-size: 0.72rem;
+
+    margin-top: 4px;
+}
+
+
+/* ============================================================
+   STREAMLIT METRIC CARDS
+   ============================================================ */
+
+[data-testid="stMetric"] {
+    background:
+        linear-gradient(
+            145deg,
+            rgba(18, 37, 56, 0.95),
+            rgba(9, 22, 36, 0.95)
+        );
+
+    border: 1px solid #223e57;
+
+    border-radius: 15px;
+
+    padding: 15px 17px;
+
+    box-shadow:
+        0 7px 22px rgba(0, 0, 0, 0.22);
+}
+
+[data-testid="stMetricLabel"] {
+    color: #8aa3b8 !important;
+
+    font-size: 0.78rem !important;
+
+    font-weight: 650 !important;
+}
+
+[data-testid="stMetricValue"] {
+    color: #ffffff !important;
+
+    font-weight: 800 !important;
+}
+
+
+/* ============================================================
+   SIDEBAR
+   ============================================================ */
+
+section[data-testid="stSidebar"] {
+    background:
+        linear-gradient(
+            180deg,
+            #06111d 0%,
+            #081522 100%
+        );
+
+    border-right: 1px solid #1d354b;
+}
+
+section[data-testid="stSidebar"] > div {
+    padding-top: 1.5rem;
+}
+
+section[data-testid="stSidebar"] h1,
+section[data-testid="stSidebar"] h2,
+section[data-testid="stSidebar"] h3 {
+    color: #ffffff !important;
+}
+
+section[data-testid="stSidebar"] label {
+    color: #b7c9d8 !important;
+}
+
+
+/* ============================================================
+   SIDEBAR INPUTS
+   ============================================================ */
+
+section[data-testid="stSidebar"] [data-baseweb="select"] {
+    background: #0d2032;
+
+    border-radius: 9px;
+}
+
+section[data-testid="stSidebar"] input {
+    background: #0d2032 !important;
+
+    color: #ffffff !important;
+}
+
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+
+.stButton > button {
+    width: 100%;
+
+    background:
+        linear-gradient(
+            135deg,
+            #123b5c,
+            #0d2942
+        );
+
+    color: #ffffff;
+
+    border: 1px solid #315977;
+
+    border-radius: 10px;
+
+    font-weight: 700;
+
+    min-height: 42px;
+
+    transition:
+        transform 0.15s ease,
+        border-color 0.15s ease,
+        background 0.15s ease;
+}
+
+.stButton > button:hover {
+    background:
+        linear-gradient(
+            135deg,
+            #17496e,
+            #123651
+        );
+
+    border-color: #4c7798;
+
+    transform: translateY(-1px);
+}
+
+.stButton > button:active {
+    transform: translateY(0);
+}
+
+
+/* ============================================================
+   DOWNLOAD BUTTONS
+   ============================================================ */
+
+.stDownloadButton > button {
+    width: 100%;
+
+    background:
+        linear-gradient(
+            135deg,
+            #153f5b,
+            #0d293f
+        );
+
+    color: #ffffff;
+
+    border: 1px solid #315977;
+
+    border-radius: 10px;
+
+    font-weight: 700;
+}
+
+.stDownloadButton > button:hover {
+    border-color: #4d7898;
+}
+
+
+/* ============================================================
+   TABS
+   ============================================================ */
+
+.stTabs [data-baseweb="tab-list"] {
+    gap: 5px;
+
+    background: rgba(7, 19, 31, 0.75);
+
+    border: 1px solid #1e354b;
+
+    border-radius: 13px;
+
+    padding: 5px;
+}
+
+.stTabs [data-baseweb="tab"] {
+    color: #829bb0;
+
+    border-radius: 9px;
+
+    padding: 9px 15px;
+
+    font-weight: 650;
+}
+
+.stTabs [data-baseweb="tab"]:hover {
+    color: #dceaf4;
+}
+
+.stTabs [aria-selected="true"] {
+    color: #ffffff !important;
+
+    background: #15344e;
+}
+
+.stTabs [data-baseweb="tab-highlight"] {
+    background: #5b94bd;
+}
+
+
+/* ============================================================
+   ALERTS
+   ============================================================ */
+
+[data-testid="stAlert"] {
+    border-radius: 13px;
+
+    border: 1px solid #29445a;
+}
+
+
+/* ============================================================
+   SUCCESS
+   ============================================================ */
+
+div[data-testid="stAlert"][kind="success"] {
+    background: rgba(20, 75, 57, 0.25);
+}
+
+
+/* ============================================================
+   WARNING
+   ============================================================ */
+
+div[data-testid="stAlert"][kind="warning"] {
+    background: rgba(105, 75, 20, 0.25);
+}
+
+
+/* ============================================================
+   ERROR
+   ============================================================ */
+
+div[data-testid="stAlert"][kind="error"] {
+    background: rgba(105, 32, 38, 0.25);
+}
+
+
+/* ============================================================
+   INFO
+   ============================================================ */
+
+div[data-testid="stAlert"][kind="info"] {
+    background: rgba(22, 65, 95, 0.25);
+}
+
+
+/* ============================================================
+   DATAFRAMES
+   ============================================================ */
+
+[data-testid="stDataFrame"] {
+    border: 1px solid #223e57;
+
+    border-radius: 12px;
+
+    overflow: hidden;
+
+    box-shadow:
+        0 6px 18px rgba(0, 0, 0, 0.18);
+}
+
+
+/* ============================================================
+   EXPANDERS
+   ============================================================ */
+
+[data-testid="stExpander"] {
+    background: rgba(11, 27, 43, 0.75);
+
+    border: 1px solid #213b52;
+
+    border-radius: 13px;
+}
+
+[data-testid="stExpander"] summary {
+    color: #dbe8f2 !important;
+
+    font-weight: 650;
+}
+
+
+/* ============================================================
+   SLIDERS
+   ============================================================ */
+
+[data-baseweb="slider"] {
+    margin-top: 5px;
+}
+
+[data-baseweb="slider"] div[role="slider"] {
+    border-color: #6da2c5;
+}
+
+
+/* ============================================================
+   FILE UPLOADER
+   ============================================================ */
+
+[data-testid="stFileUploader"] {
+    background: rgba(12, 29, 45, 0.7);
+
+    border: 1px dashed #31536d;
+
+    border-radius: 12px;
+
+    padding: 8px;
+}
+
+
+/* ============================================================
+   PLOTLY CHART CONTAINERS
+   ============================================================ */
+
+.js-plotly-plot {
+    border-radius: 14px;
+
+    overflow: hidden;
+}
+
+
+/* ============================================================
+   DIVIDERS
+   ============================================================ */
+
+hr {
+    border-color: #20394f !important;
+
+    opacity: 0.75;
+}
+
+
+/* ============================================================
+   STATUS BADGES
+   ============================================================ */
+
+.status-healthy {
+    display: inline-block;
+
+    padding: 6px 12px;
+
+    border-radius: 20px;
+
+    background: rgba(28, 130, 91, 0.18);
+
+    border: 1px solid #287d5d;
+
+    color: #72d4aa;
+
+    font-weight: 700;
+}
+
+.status-warning {
+    display: inline-block;
+
+    padding: 6px 12px;
+
+    border-radius: 20px;
+
+    background: rgba(151, 104, 28, 0.18);
+
+    border: 1px solid #96702d;
+
+    color: #e7c16b;
+
+    font-weight: 700;
+}
+
+.status-critical {
+    display: inline-block;
+
+    padding: 6px 12px;
+
+    border-radius: 20px;
+
+    background: rgba(145, 42, 49, 0.18);
+
+    border: 1px solid #93404a;
+
+    color: #f18b93;
+
+    font-weight: 700;
+}
+
+
+/* ============================================================
+   SECTION HEADERS
+   ============================================================ */
+
+.section-header {
+    color: #ffffff;
+
+    font-size: 1.15rem;
+
+    font-weight: 750;
+
+    padding: 8px 0 10px 0;
+
+    border-bottom: 1px solid #20394f;
+
+    margin-bottom: 15px;
+}
+
+
+/* ============================================================
+   AI SCORE CARDS
+   ============================================================ */
+
+.ai-card {
+    background:
+        linear-gradient(
+            145deg,
+            rgba(18, 37, 56, 0.95),
+            rgba(8, 21, 34, 0.95)
+        );
+
+    border: 1px solid #27445d;
+
+    border-radius: 14px;
+
+    padding: 16px;
+
+    margin-bottom: 10px;
+}
+
+.ai-card-title {
+    color: #8faac0;
+
+    font-size: 0.75rem;
+
+    text-transform: uppercase;
+
+    letter-spacing: 0.8px;
+}
+
+.ai-card-value {
+    color: #ffffff;
+
+    font-size: 1.45rem;
+
+    font-weight: 800;
+
+    margin-top: 5px;
+}
+
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+
+.aerotwin-footer {
+    text-align: center;
+
+    color: #607b91;
+
+    font-size: 0.74rem;
+
+    padding: 30px 0 10px 0;
+
+    border-top: 1px solid #1d354b;
+
+    margin-top: 30px;
+}
+
+
+/* ============================================================
+   MOBILE RESPONSIVE
+   ============================================================ */
+
+@media (max-width: 900px) {
+
+    .aerotwin-title {
+        font-size: 2.1rem;
+    }
+
+    .aerotwin-subtitle {
+        font-size: 0.9rem;
+    }
+
+    .main .block-container {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+}
+
+
+/* ============================================================
+   SCROLLBAR
+   ============================================================ */
+
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #07111c;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #29475f;
+
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #3d6684;
+}
