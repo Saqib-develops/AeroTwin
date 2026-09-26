@@ -1727,20 +1727,6 @@ with t3:
         width="stretch"
     )
 
-    if r.overall_health < 0.70:
-
-        st.warning(
-            "🔧 Maintenance advisory: investigate the dominant "
-            "degraded subsystem before the next defined "
-            "maintenance window."
-        )
-
-    else:
-
-        st.info(
-            "✓ No immediate maintenance escalation from "
-            "prototype decision logic."
-        )
 
 
 # =====================================================================
