@@ -254,7 +254,15 @@ def simulate(scenario='Normal', n=180, seed=42, throttle=None, altitude=None,
     # automatically instead of needing its own hard-coded delta.
     # ------------------------------------------------------------------
     fs = int(n * fault_start_fraction)
-    ramp = np.clip((t - fs) / max(1, n - fs), 0, 1)
+
+    if scenario == "Normal":
+        ramp = np.zeros(n)
+    else:
+        ramp = np.clip(
+            (t - fs) / max(1, n - fs),
+            0,
+            1
+        )
 
     if scenario == 'Overheating / Thermal Degradation':
         cht = cht + 42 * ramp

@@ -142,6 +142,11 @@ def test_all_scenarios_run_and_validate():
         issues = validate_telemetry(df)
         assert issues == [], f'{scenario}: {issues}'
 
+def test_normal_has_no_degradation():
+    df = simulate("Normal", 180, 42)
+
+    assert (df["fault_ramp"] == 0).all()
+    assert (df["degradation_stage"] == "HEALTHY").all()
 
 def _run_all():
     tests = [(name, fn) for name, fn in globals().items()
