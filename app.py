@@ -1,3 +1,14 @@
+from analytics import (
+    add_twin_features,
+    add_derived_features,
+    health,
+    fit_detector,
+    detect,
+    diagnose,
+    rul,
+    threshold_vs_ai,
+    run_analytics,
+)
 import io
 import time
 import streamlit as st
@@ -16,17 +27,6 @@ with open(css_path, "r", encoding="utf-8") as f:
         f"<style>{f.read()}</style>",
         unsafe_allow_html=True
     )
-from analytics import (
-    add_twin_features,
-    add_derived_features,
-    health,
-    fit_detector,
-    detect,
-    diagnose,
-    rul,
-    threshold_vs_ai,
-    run_analytics,
-)
 
 
 # =====================================================================
@@ -462,7 +462,8 @@ def build_event_timeline(mission_slice):
     debounced_fault = _debounce_categorical(mission_slice["fault"])
 
     if "anomaly" in mission_slice.columns:
-        anomaly_confirmed = mission_slice["anomaly"].rolling(3, min_periods=3).sum() >= 3
+        anomaly_confirmed = mission_slice["anomaly"].rolling(
+            3, min_periods=3).sum() >= 3
     else:
         anomaly_confirmed = pd.Series(False, index=mission_slice.index)
 
@@ -541,7 +542,9 @@ if source == "Upload CSV":
             )
 
             st.session_state.source_name = uploaded.name
-            st.session_state.replay_idx = 0
+
+            # Show the complete uploaded mission by default
+            st.session_state.replay_idx = len(st.session_state.df) - 1
             st.session_state.replay_playing = False
             st.session_state.pop("pdf_report_bytes", None)
 
@@ -582,7 +585,9 @@ else:
             st.session_state.source_name = (
                 f"Simulated: {scenario}"
             )
-            st.session_state.replay_idx = 0
+
+            # Show the complete mission by default
+            st.session_state.replay_idx = len(st.session_state.df) - 1
             st.session_state.replay_playing = False
             st.session_state.pop("pdf_report_bytes", None)
 
