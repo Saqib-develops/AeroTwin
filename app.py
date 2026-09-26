@@ -1083,31 +1083,6 @@ with t1:
         width="stretch"
     )
 
-    st.write(
-        "### 🧬 Digital Twin Fit"
-    )
-
-    twin_fit_fig = go.Figure()
-
-    twin_fit_fig.add_trace(
-        go.Scatter(
-            x=d.t,
-            y=d.twin_fit * 100,
-            name="Twin Fit"
-        )
-    )
-
-    twin_fit_fig.update_layout(
-        title="Digital Twin Model Fit",
-        xaxis_title="Mission Time",
-        yaxis_title="Twin Fit (%)"
-    )
-
-    st.plotly_chart(
-        twin_fit_fig,
-        width="stretch"
-    )
-
     f2 = go.Figure()
 
     f2.add_trace(
