@@ -665,28 +665,27 @@ with st.sidebar:
     st.divider()
     st.header("🛰 Mission Replay")
 
-    replay_speed = st.slider(
-        "Replay speed (ticks / second)",
-        1, 20, 5,
-        key="replay_speed"
-    )
-
-    rc1, rc2, rc3 = st.columns(3)
-    if rc1.button("▶️ Play", width="stretch"):
+    if st.button(
+        "▶️ Run Replay",
+        width="stretch"
+    ):
         st.session_state.replay_playing = True
-    if rc2.button("⏸️ Pause", width="stretch"):
-        st.session_state.replay_playing = False
-    if rc3.button("⏮️ Restart", width="stretch"):
-        st.session_state.replay_playing = False
         st.session_state.replay_idx = 0
 
-    st.session_state.replay_idx = st.slider(
+    replay_position = st.slider(
         "Scrub mission time",
-        0, n_total - 1,
-        st.session_state.replay_idx,
+        1,
+        n_total,
+        st.session_state.replay_idx + 1,
         key="replay_scrub_slider"
     )
-    st.caption(f"Showing mission tick {st.session_state.replay_idx + 1} of {n_total}.")
+
+    st.session_state.replay_idx = replay_position - 1
+
+    st.caption(
+        f"Mission sample: "
+        f"{replay_position}/{n_total}"
+    )
 
 d = st.session_state.df.iloc[: st.session_state.replay_idx + 1]
 r = d.iloc[-1]
@@ -1163,77 +1162,83 @@ with t1:
         yaxis_title="Sensor Value / Scaled Vibration"
     )
 
+    st.plotly_chart(
+        f2,
+        width="stretch"
+    )
+
     st.write("### 🧊 3D Engine Operating State")
 
-fig_3d = go.Figure()
+    fig_3d = go.Figure()
 
-fig_3d.add_trace(
-    go.Scatter3d(
-        x=d["rpm"],
-        y=d["cht"],
-        z=d["egt"],
-        mode="markers+lines",
+    fig_3d.add_trace(
+        go.Scatter3d(
+            x=d["rpm"],
+            y=d["cht"],
+            z=d["egt"],
+            mode="markers+lines",
 
-        marker=dict(
-            size=5,
-            color=d["anomaly_score"],
-            colorscale="Turbo",
-            showscale=True,
-            colorbar=dict(
-                title="AI Anomaly"
-            )
+            marker=dict(
+                size=5,
+                color=d["anomaly_score"],
+                colorscale="Turbo",
+                showscale=True,
+                colorbar=dict(
+                    title="AI Anomaly"
+                )
+            ),
+
+            line=dict(
+                width=2
+            ),
+
+            text=[
+                f"Time: {t}<br>"
+                f"RPM: {rpm:.0f}<br>"
+                f"CHT: {cht:.1f} °C<br>"
+                f"EGT: {egt:.0f} °C<br>"
+                f"Health: {health:.1f}%"
+                for t, rpm, cht, egt, health
+                in zip(
+                    d["t"],
+                    d["rpm"],
+                    d["cht"],
+                    d["egt"],
+                    d["overall_health"] * 100
+                )
+            
+            ],
+
+            hovertemplate="%{text}<extra></extra>",
+
+            name="Engine State"
+        )
+    )
+
+    fig_3d.update_layout(
+        title="3D Engine Operating State",
+
+        scene=dict(
+            xaxis_title="RPM",
+            yaxis_title="CHT (°C)",
+            zaxis_title="EGT (°C)",
+            bgcolor="rgba(0,0,0,0)"
         ),
 
-        line=dict(
-            width=2
-        ),
+        height=650,
 
-        text=[
-            f"Time: {t}<br>"
-            f"RPM: {rpm:.0f}<br>"
-            f"CHT: {cht:.1f} °C<br>"
-            f"EGT: {egt:.0f} °C<br>"
-            f"Health: {health:.1f}%"
-            for t, rpm, cht, egt, health
-            in zip(
-                d["t"],
-                d["rpm"],
-                d["cht"],
-                d["egt"],
-                d["overall_health"] * 100
-            )
-        ],
-
-        hovertemplate="%{text}<extra></extra>",
-
-        name="Engine State"
+        margin=dict(
+            l=0,
+            r=0,
+            t=50,
+            b=0
+        )
     )
-)
 
-fig_3d.update_layout(
-    title="3D Engine Operating State",
-
-    scene=dict(
-        xaxis_title="RPM",
-        yaxis_title="CHT (°C)",
-        zaxis_title="EGT (°C)",
-        bgcolor="rgba(0,0,0,0)"
-    ),
-
-    height=650,
-
-    margin=dict(
-        l=0,
-        r=0,
-        t=50,
-        b=0
+    st.plotly_chart(
+        fig_3d,
+        width="stretch"
     )
-)
-
-st.plotly_chart(
-    fig_3d,
-    width="stretch"
-)
 
 
 # =====================================================================
@@ -1744,7 +1749,7 @@ with t3:
 
 with t4:
 
-    st.write(f"### 🛰 Mission Replay — tick {st.session_state.replay_idx + 1} of {n_total}")
+    st.write(f"### 🛰 Mission Replay — Sample {st.session_state.replay_idx + 1} of {n_total}")
     st.progress((st.session_state.replay_idx + 1) / n_total)
 
     st.write("#### 🕒 Fault / Event Timeline")
@@ -2441,9 +2446,15 @@ st.caption(
 # =====================================================================
 
 if st.session_state.get("replay_playing", False):
+
     if st.session_state.replay_idx < n_total - 1:
-        time.sleep(1.0 / st.session_state.replay_speed)
+
+        time.sleep(0.1)
+
         st.session_state.replay_idx += 1
+
         st.rerun()
+
     else:
+
         st.session_state.replay_playing = False
